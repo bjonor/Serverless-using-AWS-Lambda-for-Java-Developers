@@ -1,0 +1,15 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Description: >
+  assignment-1
+
+  Sample SAM Template for assignment-1
+
+Resources:
+  Assignment1Function:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: Assignment1Function
+      Handler: assignment1.App::truckTracker
+      Runtime: java11
+      MemorySize: 512
