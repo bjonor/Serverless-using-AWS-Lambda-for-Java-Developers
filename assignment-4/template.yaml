@@ -1,0 +1,52 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Description: >
+  assignment_3
+
+Globals:
+  Function:
+    Timeout: 5
+    Runtime: java11
+    Architectures:
+      - x86_64
+    MemorySize: 512
+
+Resources:
+  GradedStudentTopic:
+    Type: AWS::SNS::Topic
+
+  StudentBucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName: !Sub ${AWS::StackName}-${AWS::AccountId}-${AWS::Region}
+
+  GradingFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: testgrades
+      Handler: codes.bjornnorgren.testgrades.GradingLambda::handle
+      Environment:
+        Variables:
+          TEST_GRADES_TOPIC: !Ref GradedStudentTopic
+      Policies:
+        - S3ReadPolicy:
+            BucketName: !Sub ${AWS::StackName}-${AWS::AccountId}-${AWS::Region}
+        - SNSPublishMessagePolicy:
+            TopicName: !GetAtt GradedStudentTopic.TopicName
+      Events:
+        S3Event:
+          Type: S3
+          Properties:
+            Bucket: !Ref StudentBucket
+            Events: s3:ObjectCreated:*
+
+  ReportFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: testgrades
+      Handler: codes.bjornnorgren.testgrades.ReportLambda::handle
+      Events:
+        SNSEvent:
+          Type: SNS
+          Properties:
+            Topic: !Ref GradedStudentTopic
