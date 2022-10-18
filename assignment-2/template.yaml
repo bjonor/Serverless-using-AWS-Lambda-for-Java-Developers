@@ -1,0 +1,56 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Description: >
+  assignment_2
+
+Globals:
+  Function:
+    Timeout: 5
+    Runtime: java11
+    MemorySize: 512
+    Environment:
+      Variables:
+        CUSTOMERS_TABLE: !Ref CustomersTable
+
+Resources:
+  CustomersTable:
+    Type: AWS::Serverless::SimpleTable
+    Properties:
+      PrimaryKey:
+        Name: id
+        Type: String
+
+  CreateCustomerFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: customersapi
+      Handler: customers.CreateCustomerLambda::createCustomer
+      Policies:
+        - DynamoDBCrudPolicy:
+            TableName: !Ref CustomersTable
+      Events:
+        CustomerEvents:
+          Type: Api
+          Properties:
+            Path: /customers
+            Method: POST
+
+  ReadCustomersFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: customersapi
+      Handler: customers.ReadCustomersLambda::readCustomers
+      Policies:
+        - DynamoDBReadPolicy:
+            TableName: !Ref CustomersTable
+      Events:
+        CustomerEvents:
+          Type: Api
+          Properties:
+            Path: /customers
+            Method: GET
+
+Outputs:
+  CustomersRestUrl:
+    Description: "Customers REST URL"
+    Value: !Sub "https://${ServerlessRestApi}.execute-api.${AWS::Region}.amazonaws.com/Prod/customers"
